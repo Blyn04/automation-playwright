@@ -1,4 +1,4 @@
-import { test } from '../fixtures/AuthFixtures';
+import { test } from '../PageObjectModel/nuls/fixtures/AuthFixtures';
 
 test.describe('Regression Tests', () => {   
     test('Login Test', async ({ loginPage }) => {

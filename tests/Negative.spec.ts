@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/AuthFixtures';
+import { test, expect } from '../PageObjectModel/nuls/fixtures/AuthFixtures';
 
 test.describe('Negative Login Tests', () => {
 
