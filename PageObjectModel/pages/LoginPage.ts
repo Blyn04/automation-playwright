@@ -38,19 +38,24 @@ export class LoginPage {
         throw new Error("EMAIL_ADDRESS is not set");
       }
 
-      await expect(this.emailAddressInput).toBeVisible();
-      await expect(this.emailAddressInput).toBeEnabled();
-      await expect(this.emailAddressInput).toBeEmpty();
-
-      await this.emailAddressInput.fill(emailAddress);
-
-      await expect(this.emailAddressInput).toHaveValue(emailAddress);
+      await this.fillEmailAddress(emailAddress);
 
       console.log(chalk.green("✔ Email input successful"));
 
     } catch (error) {
       console.error(chalk.red(`Error in inputEmailAddress: ${error}`));
       throw error;
+    }
+  }
+
+  async fillEmailAddress(emailAddress: string, assertValue = true) {
+    await expect(this.emailAddressInput).toBeVisible();
+    await expect(this.emailAddressInput).toBeEnabled();
+
+    await this.emailAddressInput.fill(emailAddress);
+
+    if (assertValue) {
+      await expect(this.emailAddressInput).toHaveValue(emailAddress);
     }
   }
 
@@ -62,19 +67,24 @@ export class LoginPage {
         throw new Error("PASSWORD is not set");
       }
 
-      await expect(this.passwordInput).toBeVisible();
-      await expect(this.passwordInput).toBeEnabled();
-      await expect(this.passwordInput).toBeEmpty();
-
-      await this.passwordInput.fill(password);
-
-      await expect(this.passwordInput).toHaveValue(password);
+      await this.fillPassword(password);
 
       console.log(chalk.green("✔ Password input successful"));
 
     } catch (error) {
       console.error(chalk.red(`Error in inputPassword: ${error}`));
       throw error;
+    }
+  }
+
+  async fillPassword(password: string, assertValue = true) {
+    await expect(this.passwordInput).toBeVisible();
+    await expect(this.passwordInput).toBeEnabled();
+
+    await this.passwordInput.fill(password);
+
+    if (assertValue) {
+      await expect(this.passwordInput).toHaveValue(password);
     }
   }
 
@@ -92,6 +102,34 @@ export class LoginPage {
       console.error(chalk.red(`Error in clickLoginButton: ${error}`));
       throw error;
     }
+  }
+
+  async doubleClickLoginButton() {
+    try {
+      await expect(this.loginButton).toBeVisible();
+      await expect(this.loginButton).toBeEnabled();
+      await expect(this.loginButton).toHaveText(/Login/i);
+
+      await this.loginButton.dblclick();
+
+      console.log(chalk.green("✔ Login button double-clicked"));
+
+    } catch (error) {
+      console.error(chalk.red(`Error in doubleClickLoginButton: ${error}`));
+      throw error;
+    }
+  }
+
+  get emailField() {
+    return this.emailAddressInput;
+  }
+
+  get passwordField() {
+    return this.passwordInput;
+  }
+
+  get submitButton() {
+    return this.loginButton;
   }
 
   async testFinalLoginPage() {
