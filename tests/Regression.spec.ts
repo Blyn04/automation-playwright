@@ -1,11 +1,13 @@
 import { test } from '../PageObjectModel/nuls/fixtures/AuthFixtures';
 
 test.describe('Regression Tests', () => {   
-    test('Login Test', async ({ loginPage }) => {
+    test('Login Test', async ({ loginPage, dashboardPage }) => {
         await loginPage.navigateToLoginPage();
         await loginPage.inputEmailAddress();
         await loginPage.inputPassword();
         await loginPage.clickLoginButton();
+
+        await dashboardPage.testDashboardPage();
     });
 
     test('Sign Up Test', async ({ signUpPage }) => {

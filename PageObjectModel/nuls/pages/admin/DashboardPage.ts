@@ -4,25 +4,85 @@ import chalk from "chalk";
 
 export class DashboardPage {
   private readonly page: Page;
+  private readonly okButtonModal: Locator;
+  private readonly inventoryMenu: Locator;
+  private readonly adminPanel: Locator;  
 
   constructor(page: Page) {
     this.page = page;
+
+    this.okButtonModal = this.page.locator(DashboardLocators.OK_BUTTON_MODAL);
+    this.adminPanel = this.page.locator(DashboardLocators.ADMIN_PANEL);
+    this.inventoryMenu = this.page.locator(DashboardLocators.INVENTORY_MENU);
   }
 
-  get OKButtonModal() {
-    return $(DashboardLocators.OK_BUTTON_MODAL);
+  async clickOKButtonModal() {
+    try {
+      await expect(this.okButtonModal).toBeVisible();
+      await expect(this.okButtonModal).toBeEnabled();
+
+      await this.okButtonModal.click();
+
+      console.log(chalk.green("✔ OK button clicked"));
+
+    } catch (error) {
+      console.error(chalk.red(`Error in clickOKButtonModal: ${error}`));
+      throw error;
+    }
   }
 
-  get CalendarTab() {
-    return $(DashboardLocators.CALENDAR_TAB);
+  async clickAdminPanel() {
+    try {
+        await expect(this.adminPanel).toBeVisible();
+        await expect(this.adminPanel).toBeEnabled();
+
+        await this.adminPanel.click();
+
+        console.log(chalk.green("✔ Admin Panel expanded"));
+
+    } catch (error) {
+        console.error(chalk.red(`Error in clickAdminPanel: ${error}`));
+        throw error;
+    }
   }
 
-  get CalendarDate() {
-    return $(DashboardLocators.CALENDAR_DATE);
+  async clickInventoryMenu() {
+    try {
+      await expect(this.inventoryMenu).toBeVisible();
+      await expect(this.inventoryMenu).toBeEnabled();
+
+      await this.inventoryMenu.click();
+
+      console.log(chalk.green("✔ Inventory menu clicked"));
+
+    } catch (error) {
+      console.error(chalk.red(`Error in clickInventoryMenu: ${error}`));
+      throw error;
+    }
   }
 
-  get CriticalStocksButton() {
-    return $(DashboardLocators.CRITICAL_STOCKS_BUTTON);
+  get okButton() {
+    return this.okButtonModal;
+  }
+
+  get inventory() {
+    return this.inventoryMenu;
+  }
+
+  async testDashboardPage() {
+    try {
+      await this.clickOKButtonModal();
+      await this.clickAdminPanel();
+      await expect(this.inventoryMenu).toBeVisible();
+      await this.clickInventoryMenu();
+
+      await this.page.waitForLoadState("networkidle");
+
+      console.log(chalk.blue("✔ Successfully navigated to Inventory"));
+
+    } catch (error) {
+      console.error(chalk.red(`Dashboard navigation failed: ${error}`));
+      throw error;
+    }
   }
 }
-
