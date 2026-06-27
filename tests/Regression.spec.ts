@@ -34,4 +34,16 @@ test.describe('Regression Tests', () => {
         await dashboardPage.navigateToProfileFromHeader();
         await profilePage.testChangeProfilePhoto();
     });
+
+    test('Inventory Test', async ({ loginPage, dashboardPage, inventoryPage }) => {
+        test.setTimeout(120000);
+
+        await loginPage.navigateToLoginPage();
+        await loginPage.inputEmailAddress();
+        await loginPage.inputPassword();
+        await loginPage.clickLoginButton();
+
+        await dashboardPage.navigateToInventory();
+        await inventoryPage.testInventoryFlow();
+    });
 });

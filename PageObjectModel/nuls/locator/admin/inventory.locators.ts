@@ -1,0 +1,18 @@
+export const InventoryLocators = {
+  FILTER_CATEGORY_SELECT: '.filter-select:has(.ant-select-selection-placeholder:text("Filter by Category"))',
+  TABLE_ROW_BY_KEY: (rowKey: string) => `tr[data-row-key="${rowKey}"]`,
+  DOWNLOAD_QR_CODE_BUTTON: '//button[.//span[text()="Download QR Code"]]',
+  MODAL_WRAP: '.ant-modal-wrap',
+  MODAL: '.ant-modal',
+  ADD_ITEM_BUTTON: '//button[.//span[text()="Add Item to Inventory"]]',
+  ITEM_NAME_INPUT: '[id="item Name"]',
+  ITEM_DESCRIPTION_INPUT: '[id="Item Description"]',
+  CATEGORY_SELECT: '#category',
+  AUTOMATIC_ID_RADIO: 'input[type="radio"][value="automatic"]',
+  QUANTITY_INPUT: '#quantityDirect',
+  STOCK_ROOM_INPUT: '#labRoom',
+  SHELVES_INPUT: '#shelves',
+  ROW_INPUT: '#row',
+  ADD_TO_INVENTORY_BUTTON: '//button[@type="submit"][.//span[text()="Add to Inventory"]]',
+  ANT_SELECT_OPTION: '.ant-select-item-option-content',
+};

@@ -119,16 +119,25 @@ export class DashboardPage {
     return this.inventoryMenu;
   }
 
-  async testDashboardPage() {
+  async navigateToInventory() {
     try {
       await this.clickOKButtonModal();
       await this.clickAdminPanel();
       await expect(this.inventoryMenu).toBeVisible();
       await this.clickInventoryMenu();
 
-      await this.page.waitForLoadState("networkidle");
+      await expect(this.inventoryMenu).toBeVisible();
 
       console.log(chalk.blue("✔ Successfully navigated to Inventory"));
+    } catch (error) {
+      console.error(chalk.red(`Inventory navigation failed: ${error}`));
+      throw error;
+    }
+  }
+
+  async testDashboardPage() {
+    try {
+      await this.navigateToInventory();
 
     } catch (error) {
       console.error(chalk.red(`Dashboard navigation failed: ${error}`));

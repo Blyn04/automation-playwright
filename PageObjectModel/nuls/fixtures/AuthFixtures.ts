@@ -2,12 +2,14 @@ import { test as baseTest, expect } from '@playwright/test';
 import { LoginPage } from '../pages/LoginPage';
 import { SignUpPage } from '../pages/SignUpPage';
 import { DashboardPage } from '../pages/admin/DashboardPage';
+import { InventoryPage } from '../pages/admin/InventoryPage';
 import { ProfilePage } from '../pages/ProfilePage';
 
 type AuthFixtures = {
   loginPage: LoginPage;
   signUpPage: SignUpPage;
   dashboardPage: DashboardPage;
+  inventoryPage: InventoryPage;
   profilePage: ProfilePage;
 };
 
@@ -27,6 +29,11 @@ export const test = baseTest.extend<AuthFixtures>({
   dashboardPage: async ({ page }, use) => {
     const dashboardPage = new DashboardPage(page);
     await use(dashboardPage);
+  },
+
+  inventoryPage: async ({ page }, use) => {
+    const inventoryPage = new InventoryPage(page);
+    await use(inventoryPage);
   },
 
   profilePage: async ({ page }, use) => {
