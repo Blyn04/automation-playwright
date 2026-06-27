@@ -21,4 +21,17 @@ test.describe('Regression Tests', () => {
         await signUpPage.checkTermsCheckbox();
         await signUpPage.clickSignUpButton();
     });
+
+    test('Change Profile Photo Test', async ({ loginPage, dashboardPage, profilePage }) => {
+        test.setTimeout(60000);
+
+        await loginPage.navigateToLoginPage();
+        await loginPage.inputEmailAddress();
+        await loginPage.inputPassword();
+        await loginPage.clickLoginButton();
+
+        await dashboardPage.clickOKButtonModal();
+        await dashboardPage.navigateToProfileFromHeader();
+        await profilePage.testChangeProfilePhoto();
+    });
 });
