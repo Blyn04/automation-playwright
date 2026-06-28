@@ -2,6 +2,7 @@ import { expect, Locator, Page } from "@playwright/test";
 import { ProfileLocators } from "../locator/profile.locators";
 import path from "path";
 import chalk from "chalk";
+import fs from "fs";
 
 export class ProfilePage {
   private readonly page: Page;
@@ -43,9 +44,21 @@ export class ProfilePage {
       return envPath;
     }
 
-    const userProfile = process.env.USERPROFILE;
+    // Check POM test-data folder
+    const pomTestDataPath = path.join(__dirname, "..", "test-data", "cats.jpg");
+    if (fs.existsSync(pomTestDataPath)) {
+      return pomTestDataPath;
+    }
+
+    // Check root test-data folder
+    const rootTestDataPath = path.join(process.cwd(), "test-data", "cats.jpg");
+    if (fs.existsSync(rootTestDataPath)) {
+      return rootTestDataPath;
+    }
+
+    const userProfile = process.env.USERPROFILE || process.env.HOME;
     if (!userProfile) {
-      throw new Error("PROFILE_PHOTO_PATH is not set and USERPROFILE is unavailable");
+      throw new Error("PROFILE_PHOTO_PATH is not set and USERPROFILE/HOME is unavailable");
     }
 
     return path.join(userProfile, "Downloads", "cats.jpg");
