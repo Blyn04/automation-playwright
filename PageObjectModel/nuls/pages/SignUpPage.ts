@@ -207,6 +207,82 @@ export class SignUpPage {
     }
   }
 
+  async fillName(name: string, assertValue = true) {
+    await expect(this.nameInput).toBeVisible();
+    await expect(this.nameInput).toBeEnabled();
+    await this.nameInput.fill(name);
+    if (assertValue) {
+      await expect(this.nameInput).toHaveValue(name);
+    }
+  }
+
+  async fillEmailAddress(email: string, assertValue = true) {
+    await expect(this.emailAddressInput).toBeVisible();
+    await expect(this.emailAddressInput).toBeEnabled();
+    await this.emailAddressInput.fill(email);
+    if (assertValue) {
+      await expect(this.emailAddressInput).toHaveValue(email);
+    }
+  }
+
+  async fillEmployeeId(employeeId: string, assertValue = true) {
+    await expect(this.employeeIdInput).toBeVisible();
+    await expect(this.employeeIdInput).toBeEnabled();
+    await this.employeeIdInput.fill(employeeId);
+    if (assertValue) {
+      await expect(this.employeeIdInput).toHaveValue(employeeId);
+    }
+  }
+
+  async selectJobTitleOption(jobTitle: string) {
+    await expect(this.jobTitleInput).toBeVisible();
+    await expect(this.jobTitleInput).toBeEnabled();
+    await this.jobTitleInput.selectOption(jobTitle);
+    await expect(this.jobTitleInput).toHaveValue(jobTitle);
+  }
+
+  async selectDepartmentOption(department: string) {
+    await expect(this.departmentInput).toBeVisible();
+    await expect(this.departmentInput).toBeEnabled();
+    await this.departmentInput.selectOption(department);
+    await expect(this.departmentInput).toHaveValue(department);
+  }
+
+  async uncheckTermsCheckbox() {
+    await expect(this.termsCheckbox).toBeVisible();
+    await expect(this.termsCheckbox).toBeEnabled();
+    await this.termsCheckbox.uncheck();
+    await expect(this.termsCheckbox).not.toBeChecked();
+  }
+
+  get nameField() {
+    return this.nameInput;
+  }
+
+  get emailField() {
+    return this.emailAddressInput;
+  }
+
+  get employeeIdField() {
+    return this.employeeIdInput;
+  }
+
+  get jobTitleField() {
+    return this.jobTitleInput;
+  }
+
+  get departmentField() {
+    return this.departmentInput;
+  }
+
+  get termsCheckboxField() {
+    return this.termsCheckbox;
+  }
+
+  get submitButton() {
+    return this.signUpButton;
+  }
+
   async testFinalSignUpPage() {
     try {
       await this.navigateToSignUpPage();
@@ -229,3 +305,4 @@ export class SignUpPage {
     }
   }
 }
+

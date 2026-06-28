@@ -129,3 +129,98 @@ test.describe('Edge Case Login Tests', () => {
   });
 
 });
+
+test.describe('Edge Case Sign Up Tests', () => {
+
+  test.beforeEach(async ({ signUpPage }) => {
+    await signUpPage.navigateToSignUpPage();
+    await signUpPage.clickGoToSignUpButton();
+  });
+
+  test('Sign up with very long name', async ({ signUpPage }) => {
+    const longName = 'A'.repeat(100);
+    // Passing false to assertValue because the page auto-formats the name to Sentence/Title case
+    await signUpPage.fillName(longName, false);
+    
+    await signUpPage.fillEmailAddress('test@example.com');
+    await signUpPage.fillEmployeeId('12-3456');
+    await signUpPage.selectJobTitleOption('Dean');
+    await signUpPage.selectDepartmentOption('SAH');
+    await signUpPage.checkTermsCheckbox();
+    
+    // The application formats the name by converting subsequent characters to lowercase
+    const expectedName = 'A' + 'a'.repeat(99);
+    await expect(signUpPage.nameField).toHaveValue(expectedName);
+    
+    await signUpPage.clickSignUpButton();
+    await expect(signUpPage.submitButton).toBeVisible();
+  });
+
+  test('Sign up with very long email', async ({ signUpPage }) => {
+    const longEmail = 'a'.repeat(300) + '@test.com';
+    
+    await signUpPage.fillName('Test Name');
+    await signUpPage.fillEmailAddress(longEmail);
+    await signUpPage.fillEmployeeId('12-3456');
+    await signUpPage.selectJobTitleOption('Dean');
+    await signUpPage.selectDepartmentOption('SAH');
+    await signUpPage.checkTermsCheckbox();
+    
+    await expect(signUpPage.emailField).toHaveValue(longEmail);
+    
+    await signUpPage.clickSignUpButton();
+    await expect(signUpPage.submitButton).toBeVisible();
+  });
+
+  test('Sign up with spaces only', async ({ signUpPage }) => {
+    await signUpPage.fillName('   ', false);
+    await signUpPage.fillEmailAddress('   ', false);
+    await signUpPage.fillEmployeeId('   ', false);
+    
+    // The sign up button should be disabled for invalid input (spaces only)
+    await expect(signUpPage.submitButton).toBeDisabled();
+  });
+
+  test('Sign up with special characters in name and employee ID', async ({ signUpPage }) => {
+    const specialName = 'Name!@#$';
+    const specialEmployeeId = '12-3456!@#$';
+    
+    // Passing false to assertValue because special characters are stripped by the input fields
+    await signUpPage.fillName(specialName, false);
+    await signUpPage.fillEmailAddress('test@example.com');
+    await signUpPage.fillEmployeeId(specialEmployeeId, false);
+    await signUpPage.selectJobTitleOption('Dean');
+    await signUpPage.selectDepartmentOption('SAH');
+    await signUpPage.checkTermsCheckbox();
+    
+    // Assert stripped/sanitized values
+    await expect(signUpPage.nameField).toHaveValue('Name');
+    await expect(signUpPage.employeeIdField).toHaveValue('12-3456');
+    
+    await signUpPage.clickSignUpButton();
+    await expect(signUpPage.submitButton).toBeVisible();
+  });
+
+  test('Sign up without accepting terms and conditions', async ({ signUpPage }) => {
+    await signUpPage.fillName('Test User');
+    await signUpPage.fillEmailAddress('test@example.com');
+    await signUpPage.fillEmployeeId('12-3456');
+    await signUpPage.selectJobTitleOption('Dean');
+    await signUpPage.selectDepartmentOption('SAH');
+    await signUpPage.uncheckTermsCheckbox();
+    
+    // The sign up button should be disabled when terms are not accepted
+    await expect(signUpPage.submitButton).toBeDisabled();
+  });
+
+  test('Sign up with empty fields', async ({ signUpPage }) => {
+    // The sign up button should be disabled when fields are empty
+    await expect(signUpPage.submitButton).toBeDisabled();
+    
+    await expect(signUpPage.nameField).toHaveValue('');
+    await expect(signUpPage.emailField).toHaveValue('');
+    await expect(signUpPage.employeeIdField).toHaveValue('');
+  });
+
+});
+
