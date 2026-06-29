@@ -251,6 +251,22 @@ export class InventoryPage {
     await this.fillRow("10");
   }
 
+  get nameField() {
+    return this.itemNameInput;
+  }
+
+  get descriptionField() {
+    return this.itemDescriptionInput;
+  }
+
+  get quantityField() {
+    return this.quantityInput;
+  }
+
+  get submitButton() {
+    return this.addToInventoryButton;
+  }
+
   async testInventoryFlow() {
     try {
       await expect(this.filterCategorySelect).toBeVisible();

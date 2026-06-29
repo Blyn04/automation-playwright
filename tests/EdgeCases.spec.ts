@@ -224,3 +224,67 @@ test.describe('Edge Case Sign Up Tests', () => {
 
 });
 
+test.describe('Edge Case Inventory Tests', () => {
+
+  test.beforeEach(async ({ loginPage, dashboardPage }) => {
+    test.setTimeout(90000);
+    await loginPage.navigateToLoginPage();
+    await loginPage.inputEmailAddress();
+    await loginPage.inputPassword();
+    await loginPage.clickLoginButton();
+    await dashboardPage.navigateToInventory();
+  });
+
+  test('Add inventory item with very long name and description', async ({ inventoryPage }) => {
+    await inventoryPage.clickAddItemToInventory();
+
+    const longName = 'A'.repeat(100);
+    const longDescription = 'B'.repeat(500);
+
+    await inventoryPage.fillItemName(longName);
+    await inventoryPage.fillItemDescription(longDescription);
+    await inventoryPage.selectCategory("Equipment");
+    await inventoryPage.selectAutomaticId();
+    await inventoryPage.fillQuantity("25");
+    await inventoryPage.fillStockRoomNumber("1010");
+    await inventoryPage.fillShelves("TO");
+    await inventoryPage.fillRow("10");
+
+    await expect(inventoryPage.nameField).toHaveValue(longName);
+    await expect(inventoryPage.descriptionField).toHaveValue(longDescription);
+    await expect(inventoryPage.submitButton).toBeVisible();
+  });
+
+  test('Add inventory item with spaces only in name', async ({ inventoryPage, page }) => {
+    await inventoryPage.clickAddItemToInventory();
+
+    await inventoryPage.fillItemName("   ");
+    await inventoryPage.fillItemDescription("Valid description");
+    await inventoryPage.selectCategory("Equipment");
+    await inventoryPage.selectAutomaticId();
+    await inventoryPage.fillQuantity("25");
+    await inventoryPage.fillStockRoomNumber("1010");
+    await inventoryPage.fillShelves("TO");
+    await inventoryPage.fillRow("10");
+
+    await inventoryPage.submitButton.click();
+
+    // Verify modal remains open and the name field retains the spaces
+    await expect(page.locator('.ant-modal')).toBeVisible();
+    await expect(inventoryPage.nameField).toHaveValue("   ");
+  });
+
+  test('Add inventory item with negative quantity', async ({ inventoryPage }) => {
+    await inventoryPage.clickAddItemToInventory();
+
+    await inventoryPage.fillItemName("Valid name");
+    await inventoryPage.fillItemDescription("Valid description");
+    await inventoryPage.selectCategory("Equipment");
+    await inventoryPage.selectAutomaticId();
+    
+    // The quantity input field strips/filters out negative characters (like -)
+    await inventoryPage.quantityField.fill("-5");
+    await expect(inventoryPage.quantityField).toHaveValue("5");
+  });
+});
+
