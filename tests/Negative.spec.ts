@@ -149,3 +149,82 @@ test.describe('Negative Sign Up Tests', () => {
 
 });
 
+test.describe('Negative Inventory Tests', () => {
+
+  test.beforeEach(async ({ loginPage, dashboardPage }) => {
+    test.setTimeout(90000);
+    await loginPage.navigateToLoginPage();
+    await loginPage.inputEmailAddress();
+    await loginPage.inputPassword();
+    await loginPage.clickLoginButton();
+    await dashboardPage.navigateToInventory();
+  });
+
+  test('Add inventory item with empty name', async ({ inventoryPage, page }) => {
+    await inventoryPage.clickAddItemToInventory();
+
+    await inventoryPage.fillItemDescription('Valid description');
+    await inventoryPage.selectCategory('Equipment');
+    await inventoryPage.selectAutomaticId();
+    await inventoryPage.fillQuantity('25');
+    await inventoryPage.fillStockRoomNumber('1010');
+    await inventoryPage.fillShelves('TO');
+    await inventoryPage.fillRow('10');
+
+    await expect(inventoryPage.nameField).toHaveValue('');
+    await inventoryPage.submitButton.click();
+
+    await expect(page.locator('.ant-modal')).toBeVisible();
+    await expect(inventoryPage.nameField).toHaveValue('');
+  });
+
+  test('Add inventory item with empty quantity', async ({ inventoryPage, page }) => {
+    await inventoryPage.clickAddItemToInventory();
+
+    await inventoryPage.fillItemName('Valid name');
+    await inventoryPage.fillItemDescription('Valid description');
+    await inventoryPage.selectCategory('Equipment');
+    await inventoryPage.selectAutomaticId();
+    await inventoryPage.fillStockRoomNumber('1010');
+    await inventoryPage.fillShelves('TO');
+    await inventoryPage.fillRow('10');
+
+    await expect(inventoryPage.quantityField).toHaveValue('');
+    await inventoryPage.submitButton.click();
+
+    await expect(page.locator('.ant-modal')).toBeVisible();
+    await expect(inventoryPage.quantityField).toHaveValue('');
+  });
+
+  test('Add inventory item with spaces only in name', async ({ inventoryPage, page }) => {
+    await inventoryPage.clickAddItemToInventory();
+
+    await inventoryPage.fillItemName('   ');
+    await inventoryPage.fillItemDescription('Valid description');
+    await inventoryPage.selectCategory('Equipment');
+    await inventoryPage.selectAutomaticId();
+    await inventoryPage.fillQuantity('25');
+    await inventoryPage.fillStockRoomNumber('1010');
+    await inventoryPage.fillShelves('TO');
+    await inventoryPage.fillRow('10');
+
+    await inventoryPage.submitButton.click();
+
+    await expect(page.locator('.ant-modal')).toBeVisible();
+    await expect(inventoryPage.nameField).toHaveValue('   ');
+  });
+
+  test('Add inventory item with negative quantity', async ({ inventoryPage }) => {
+    await inventoryPage.clickAddItemToInventory();
+
+    await inventoryPage.fillItemName('Valid name');
+    await inventoryPage.fillItemDescription('Valid description');
+    await inventoryPage.selectCategory('Equipment');
+    await inventoryPage.selectAutomaticId();
+
+    await inventoryPage.quantityField.fill('-5');
+    await expect(inventoryPage.quantityField).toHaveValue('5');
+  });
+
+});
+
