@@ -48,6 +48,23 @@ export class LoginPage {
     }
   }
 
+  async inputUserEmailAddress() {
+    const emailAddress = process.env.USER_EMAIL_ADDRESS as string;
+
+    try {
+      if (!emailAddress) {
+        throw new Error("USER_EMAIL_ADDRESS is not set");
+      }
+
+      await this.fillEmailAddress(emailAddress);
+
+      console.log(chalk.green("✔ User email input successful"));
+    } catch (error) {
+      console.error(chalk.red(`Error in inputUserEmailAddress: ${error}`));
+      throw error;
+    }
+  }
+
   async fillEmailAddress(emailAddress: string, assertValue = true) {
     await expect(this.emailAddressInput).toBeVisible();
     await expect(this.emailAddressInput).toBeEnabled();
@@ -73,6 +90,23 @@ export class LoginPage {
 
     } catch (error) {
       console.error(chalk.red(`Error in inputPassword: ${error}`));
+      throw error;
+    }
+  }
+
+  async inputUserPassword() {
+    const password = (process.env.USER_PASSWORD ?? process.env.PASSWORD) as string;
+
+    try {
+      if (!password) {
+        throw new Error("USER_PASSWORD or PASSWORD is not set");
+      }
+
+      await this.fillPassword(password);
+
+      console.log(chalk.green("✔ User password input successful"));
+    } catch (error) {
+      console.error(chalk.red(`Error in inputUserPassword: ${error}`));
       throw error;
     }
   }

@@ -4,6 +4,7 @@ import { SignUpPage } from '../pages/SignUpPage';
 import { DashboardPage } from '../pages/admin/DashboardPage';
 import { InventoryPage } from '../pages/admin/InventoryPage';
 import { ProfilePage } from '../pages/ProfilePage';
+import { RequisitionPage } from '../pages/RequisitionPage';
 
 type AuthFixtures = {
   loginPage: LoginPage;
@@ -11,6 +12,7 @@ type AuthFixtures = {
   dashboardPage: DashboardPage;
   inventoryPage: InventoryPage;
   profilePage: ProfilePage;
+  requisitionPage: RequisitionPage;
 };
 
 export { expect };
@@ -39,5 +41,10 @@ export const test = baseTest.extend<AuthFixtures>({
   profilePage: async ({ page }, use) => {
     const profilePage = new ProfilePage(page);
     await use(profilePage);
+  },
+
+  requisitionPage: async ({ page }, use) => {
+    const requisitionPage = new RequisitionPage(page);
+    await use(requisitionPage);
   },
 });

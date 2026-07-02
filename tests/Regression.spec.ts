@@ -30,7 +30,7 @@ test.describe('Regression Tests', () => {
         await loginPage.inputPassword();
         await loginPage.clickLoginButton();
 
-        await dashboardPage.clickOKButtonModal();
+        await dashboardPage.dismissPostLoginModals();
         await dashboardPage.navigateToProfileFromHeader();
         await profilePage.testChangeProfilePhoto();
     });
@@ -45,5 +45,17 @@ test.describe('Regression Tests', () => {
 
         await dashboardPage.navigateToInventory();
         await inventoryPage.testInventoryFlow();
+    });
+
+    test('Requisition Test', async ({ loginPage, dashboardPage, requisitionPage }) => {
+        test.setTimeout(120000);
+
+        await loginPage.navigateToLoginPage();
+        await loginPage.inputUserEmailAddress();
+        await loginPage.inputUserPassword();
+        await loginPage.clickLoginButton();
+
+        await dashboardPage.navigateToRequisition();
+        await requisitionPage.testRequisitionFlow();
     });
 });
