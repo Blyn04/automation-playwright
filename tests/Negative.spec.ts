@@ -228,3 +228,47 @@ test.describe('Negative Inventory Tests', () => {
 
 });
 
+test.describe('Negative Requisition Tests', () => {
+
+  test.beforeEach(async ({ loginPage, dashboardPage }) => {
+    test.setTimeout(120000);
+    await loginPage.navigateToLoginPage();
+    await loginPage.inputUserEmailAddress();
+    await loginPage.inputUserPassword();
+    await loginPage.clickLoginButton();
+    await dashboardPage.navigateToRequisition();
+  });
+
+  test('Finalize button is disabled without any form input', async ({ requisitionPage }) => {
+    await expect(requisitionPage.finalizeBtn).toBeVisible();
+    await expect(requisitionPage.finalizeBtn).toBeDisabled();
+  });
+
+  test('Finalize button is disabled without selecting a date', async ({ requisitionPage }) => {
+    await requisitionPage.selectItem();
+    await requisitionPage.selectProgram();
+    await requisitionPage.selectTimeFrom();
+    await requisitionPage.selectTimeTo();
+    await requisitionPage.fillRoom();
+    await requisitionPage.selectCourseCode();
+    await requisitionPage.selectUsageType();
+
+    await expect(requisitionPage.dateField).toHaveValue('');
+    await expect(requisitionPage.finalizeBtn).toBeDisabled();
+  });
+
+  test('Finalize button is disabled without entering a room number', async ({ requisitionPage }) => {
+    await requisitionPage.selectItem();
+    await requisitionPage.selectDateNeeded();
+    await requisitionPage.selectProgram();
+    await requisitionPage.selectTimeFrom();
+    await requisitionPage.selectTimeTo();
+    await requisitionPage.selectCourseCode();
+    await requisitionPage.selectUsageType();
+
+    await expect(requisitionPage.roomField).toHaveValue('');
+    await expect(requisitionPage.finalizeBtn).toBeDisabled();
+  });
+
+});
+
