@@ -14,6 +14,8 @@ export class RequisitionPage {
   private readonly usageTypeSelect: Locator;
   private readonly finalizeButton: Locator;
   private readonly confirmSubmitButton: Locator;
+  private readonly noteInput: Locator;
+  private readonly addItemRowButton: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -27,27 +29,35 @@ export class RequisitionPage {
     this.usageTypeSelect = this.page.locator(RequisitionLocators.USAGE_TYPE_SELECT);
     this.finalizeButton = this.page.locator(RequisitionLocators.FINALIZE_BUTTON);
     this.confirmSubmitButton = this.page.locator(RequisitionLocators.CONFIRM_SUBMIT_BUTTON);
+    this.noteInput = this.page.getByPlaceholder('Leave a note for the custodian');
+    this.addItemRowButton = this.page.getByRole('button', { name: 'Add Item Row' });
   }
 
   private async selectAntOption(trigger: Locator, optionText?: string) {
     await expect(trigger).toBeVisible();
+
+    // Wait for any previous dropdown leave animation to finish
+    const leavingDropdown = this.page.locator('.ant-select-dropdown.ant-slide-up-leave');
+    await leavingDropdown.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
+
     await trigger.click();
 
     const dropdown = this.page.locator(RequisitionLocators.SELECT_DROPDOWN);
-    await expect(dropdown).toBeVisible();
+    await expect(dropdown.last()).toBeVisible();
 
-    const options = dropdown.locator(RequisitionLocators.ANT_SELECT_OPTION);
+    const options = dropdown.last().locator(RequisitionLocators.ANT_SELECT_OPTION);
 
     if (optionText) {
       const option = options.filter({ hasText: optionText });
-      await expect(option.first()).toBeVisible();
+      await expect(option.first()).toBeVisible({ timeout: 15000 });
       await option.first().click();
       return;
     }
 
-    await expect(options.first()).toBeVisible();
+    await expect(options.first()).toBeVisible({ timeout: 15000 });
     await options.first().click();
   }
+
 
   private async selectTimeInPanel(panel: Locator, hour: string, minute: string) {
     const columns = panel.locator(".ant-picker-time-panel-column");
@@ -234,6 +244,64 @@ export class RequisitionPage {
 
   get confirmSubmitBtn() {
     return this.confirmSubmitButton;
+  }
+
+  get itemSelectField() {
+    return this.itemSelect;
+  }
+
+  get dateField() {
+    return this.dateNeededInput;
+  }
+
+  get roomField() {
+    return this.roomInput;
+  }
+
+  get noteField() {
+    return this.noteInput;
+  }
+
+  get addItemRowBtn() {
+    return this.addItemRowButton;
+  }
+
+  async fillNote(note: string) {
+    try {
+      await expect(this.noteInput).toBeVisible();
+      await this.noteInput.fill(note);
+
+      console.log(chalk.green("✔ Note entered"));
+    } catch (error) {
+      console.error(chalk.red(`Error in fillNote: ${error}`));
+      throw error;
+    }
+  }
+
+  async clickAddItemRow() {
+    try {
+      await expect(this.addItemRowButton).toBeVisible();
+      await expect(this.addItemRowButton).toBeEnabled();
+      await this.addItemRowButton.click();
+
+      console.log(chalk.green("✔ Add Item Row clicked"));
+    } catch (error) {
+      console.error(chalk.red(`Error in clickAddItemRow: ${error}`));
+      throw error;
+    }
+  }
+
+  async deleteItemRow(index: number) {
+    try {
+      const deleteButtons = this.page.getByRole('button', { name: 'delete' });
+      await expect(deleteButtons.nth(index)).toBeVisible();
+      await deleteButtons.nth(index).click();
+
+      console.log(chalk.green(`✔ Item row ${index} deleted`));
+    } catch (error) {
+      console.error(chalk.red(`Error in deleteItemRow: ${error}`));
+      throw error;
+    }
   }
 
   async testRequisitionFlow() {

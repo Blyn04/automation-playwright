@@ -257,3 +257,49 @@ test.describe('Edge Case Inventory Tests', () => {
 
 });
 
+test.describe('Edge Case Requisition Tests', () => {
+
+  test.beforeEach(async ({ loginPage, dashboardPage }) => {
+    test.setTimeout(120000);
+    await loginPage.navigateToLoginPage();
+    await loginPage.inputUserEmailAddress();
+    await loginPage.inputUserPassword();
+    await loginPage.clickLoginButton();
+    await dashboardPage.navigateToRequisition();
+  });
+
+  test('Note field enforces 100 character limit', async ({ requisitionPage, page }) => {
+    const longNote = 'A'.repeat(150);
+    await requisitionPage.fillNote(longNote);
+
+    const noteValue = await requisitionPage.noteField.inputValue();
+    expect(noteValue.length).toBeLessThanOrEqual(100);
+
+    await expect(page.getByText('100 / 100')).toBeVisible();
+  });
+
+  test('Delete and re-add an item row', async ({ requisitionPage, page }) => {
+    const deleteButtons = page.getByRole('button', { name: 'delete' });
+    const initialRowCount = await deleteButtons.count();
+
+    // Delete the first row (empty "Select item" row)
+    await requisitionPage.deleteItemRow(0);
+
+    await expect(deleteButtons).toHaveCount(initialRowCount - 1);
+
+    // Re-add an item row
+    await requisitionPage.clickAddItemRow();
+
+    await expect(deleteButtons).toHaveCount(initialRowCount);
+  });
+
+  test('Room field rejects non-numeric input', async ({ requisitionPage }) => {
+    await expect(requisitionPage.roomField).toBeVisible();
+    await requisitionPage.roomField.click();
+    await requisitionPage.roomField.pressSequentially('abc');
+    await expect(requisitionPage.roomField).toHaveValue('');
+  });
+
+});
+
+
