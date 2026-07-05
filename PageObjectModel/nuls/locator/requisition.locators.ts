@@ -3,10 +3,10 @@ export const RequisitionLocators = {
   REQUISITION_MENU_BY_ID:
     '//li[@data-menu-id="/main/requisition"] | //li[contains(@data-menu-id,"/main/requisition")]',
   ITEM_SELECT:
-    '.ant-select:has(.ant-select-selection-placeholder:text-is("Select Item"))',
+    '.ant-select:has(.ant-select-selection-placeholder:text-is("Select item"))',
   DATE_NEEDED_INPUT: 'input[placeholder="Select date"]',
   PROGRAM_SELECT:
-    '.ant-select:has(.ant-select-selection-placeholder:text-is("Select Program"))',
+    '.ant-select:has(.ant-select-selection-placeholder:text-is("Select or type a program"))',
   TIME_FROM_INPUT: 'input[placeholder="From"]',
   TIME_TO_INPUT: 'input[placeholder="To"]',
   ROOM_INPUT: 'input[placeholder="Enter room number"]',
