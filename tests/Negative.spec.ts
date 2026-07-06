@@ -229,6 +229,7 @@ test.describe('Negative Inventory Tests', () => {
 });
 
 test.describe('Negative Requisition Tests', () => {
+  test.describe.configure({ mode: 'serial' });
 
   test.beforeEach(async ({ loginPage, dashboardPage }) => {
     test.setTimeout(120000);

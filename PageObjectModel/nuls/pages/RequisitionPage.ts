@@ -145,11 +145,16 @@ export class RequisitionPage {
   async selectTimeTo(hour = "10", minute = "00") {
     try {
       await expect(this.timeToInput).toBeEnabled();
+
+      // Wait for any previous picker leave animation to finish
+      const leavingPicker = this.page.locator('.ant-picker-dropdown.ant-slide-up-leave');
+      await leavingPicker.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
+
       await this.timeToInput.click();
 
       const panel = this.page.locator(RequisitionLocators.PICKER_DROPDOWN);
-      await expect(panel).toBeVisible();
-      await this.selectTimeInPanel(panel, hour, minute);
+      await expect(panel.last()).toBeVisible();
+      await this.selectTimeInPanel(panel.last(), hour, minute);
 
       await expect(this.timeToInput).not.toHaveValue("");
 
@@ -159,6 +164,7 @@ export class RequisitionPage {
       throw error;
     }
   }
+
 
   async fillRoom(roomNumber?: string) {
     const room = roomNumber ?? process.env.REQUISITION_ROOM ?? "101";
