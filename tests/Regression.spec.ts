@@ -1,5 +1,7 @@
 import { test } from '../PageObjectModel/nuls/fixtures/AuthFixtures';
 
+
+// NULS
 test.describe('Regression Tests', () => {   
     test('Login Test', async ({ loginPage, dashboardPage }) => {
         await loginPage.navigateToLoginPage();
