@@ -68,8 +68,44 @@ export class DashboardPage {
 
   async dismissPostLoginModals() {
     try {
+      await this.page.waitForLoadState("networkidle");
+
+      // Try the specific buttons first
       await this.clickOKButtonModal();
       await this.clickCloseButtonModal();
+
+      // Fallback: if an Ant Design modal overlay is still blocking the page, dismiss it
+      const modalOverlay = this.page.locator('div.ant-modal-wrap');
+      const isModalStillOpen = await modalOverlay.first().isVisible().catch(() => false);
+
+      if (isModalStillOpen) {
+        console.log(chalk.yellow("⚠ Modal overlay still present, attempting fallback dismissal"));
+
+        // Try clicking any OK button inside the modal
+        const okBtn = this.page.locator('.ant-modal-wrap .ant-btn-primary, .ant-modal-wrap button:has-text("OK")').first();
+        const okVisible = await okBtn.isVisible().catch(() => false);
+        if (okVisible) {
+          await okBtn.click();
+          console.log(chalk.green("✔ Modal dismissed via OK button fallback"));
+        } else {
+          // Try clicking any close button inside the modal
+          const closeBtn = this.page.locator('.ant-modal-wrap .ant-modal-close, .ant-modal-wrap button.close-btn').first();
+          const closeVisible = await closeBtn.isVisible().catch(() => false);
+          if (closeVisible) {
+            await closeBtn.click();
+            console.log(chalk.green("✔ Modal dismissed via close button fallback"));
+          } else {
+            // Last resort: press Escape to dismiss
+            await this.page.keyboard.press("Escape");
+            console.log(chalk.green("✔ Modal dismissed via Escape key"));
+          }
+        }
+
+        // Wait for the modal to disappear
+        await modalOverlay.first().waitFor({ state: "hidden", timeout: 5000 }).catch(() => {
+          console.log(chalk.yellow("⚠ Modal overlay may still be present after dismissal attempt"));
+        });
+      }
 
       console.log(chalk.green("✔ Post-login modals dismissed"));
     } catch (error) {
