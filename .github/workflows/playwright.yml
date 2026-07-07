@@ -22,6 +22,7 @@ jobs:
         WEB_URL: ${{ secrets.WEB_URL }}
         EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
         PASSWORD: ${{ secrets.PASSWORD }}
+        USER_EMAIL_ADDRESS: ${{ secrets.USER_EMAIL_ADDRESS }}
         EMPLOYEE_ID: ${{ secrets.EMPLOYEE_ID }}
         NAME: ${{ secrets.NAME }}
         JOB_TITLE: ${{ secrets.JOB_TITLE }}
