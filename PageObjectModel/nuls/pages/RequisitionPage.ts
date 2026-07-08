@@ -149,7 +149,7 @@ export class RequisitionPage {
 
       const enabledDate = dropdown
         .locator(".ant-picker-cell:not(.ant-picker-cell-disabled) .ant-picker-cell-inner")
-        .last();
+        .first();
 
       await expect(enabledDate).toBeVisible();
       await enabledDate.click();
@@ -167,8 +167,33 @@ export class RequisitionPage {
     const program = programName ?? process.env.REQUISITION_PROGRAM;
 
     try {
-      await this.selectAntOption(this.programSelect, program);
-      console.log(chalk.green(`✔ Program selected${program ? `: ${program}` : ""}`));
+      await expect(this.programSelect).toBeVisible();
+      await this.programSelect.click();
+
+      const dropdown = this.page.locator(RequisitionLocators.SELECT_DROPDOWN);
+      await expect(dropdown.last()).toBeVisible();
+
+      const options = dropdown.last().locator(RequisitionLocators.ANT_SELECT_OPTION);
+      await expect(options.first()).toBeVisible({ timeout: 15000 });
+
+      const optionsInfo = await options.evaluateAll(els => {
+        return els.map(el => el.textContent?.trim() || "");
+      });
+
+      console.log("=== DEBUG Program Options ===");
+      console.log(JSON.stringify(optionsInfo, null, 2));
+
+      let targetIndex = 0;
+      if (program) {
+        targetIndex = optionsInfo.findIndex(opt => opt.toLowerCase().includes(program.toLowerCase()));
+        if (targetIndex === -1) {
+          console.log(chalk.yellow(`⚠ Preferred program "${program}" not found. Defaulting to first option.`));
+          targetIndex = 0;
+        }
+      }
+
+      await options.nth(targetIndex).click();
+      console.log(chalk.green(`✔ Program selected: ${optionsInfo[targetIndex]}`));
     } catch (error) {
       console.error(chalk.red(`Error in selectProgram: ${error}`));
       throw error;
@@ -179,11 +204,16 @@ export class RequisitionPage {
     try {
       await expect(this.timeFromInput).toBeVisible();
       await expect(this.timeFromInput).toBeEnabled();
+
+      // Wait for any previous picker leave animation to finish
+      const leavingPicker = this.page.locator('.ant-picker-dropdown.ant-slide-up-leave');
+      await leavingPicker.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
+
       await this.timeFromInput.click();
 
       const panel = this.page.locator(RequisitionLocators.PICKER_DROPDOWN);
-      await expect(panel).toBeVisible();
-      await this.selectTimeInPanel(panel, hour, minute);
+      await expect(panel.last()).toBeVisible();
+      await this.selectTimeInPanel(panel.last(), hour, minute);
 
       await expect(this.timeFromInput).not.toHaveValue("");
 
@@ -286,14 +316,14 @@ export class RequisitionPage {
   }
 
   async fillRequisitionForm() {
-    await this.selectItem();
-    await this.selectDateNeeded();
     await this.selectProgram();
+    await this.selectDateNeeded();
     await this.selectTimeFrom();
     await this.selectTimeTo();
     await this.fillRoom();
     await this.selectCourseCode();
     await this.selectUsageType();
+    await this.selectItem();
   }
 
   get finalizeBtn() {
@@ -386,6 +416,10 @@ export class RequisitionPage {
       console.log(chalk.blue("✔ Requisition flow completed"));
     } catch (error) {
       console.error(chalk.red(`Requisition flow failed: ${error}`));
+      console.log("=== DEBUG: Page Text on Failure ===");
+      const pageText = await this.page.evaluate(() => document.body.innerText).catch(() => "could not get page text");
+      console.log(pageText);
+      console.log("====================================");
       throw error;
     }
   }
