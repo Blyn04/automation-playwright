@@ -4,7 +4,7 @@ import { SignUpPage } from '../pages/SignUpPage';
 import { DashboardPage } from '../pages/admin/DashboardPage';
 import { InventoryPage } from '../pages/admin/InventoryPage';
 import { ProfilePage } from '../pages/ProfilePage';
-import { RequisitionPage } from '../pages/RequisitionPage';
+import { RequisitionPage } from '../pages/user/RequisitionPage';
 
 type AuthFixtures = {
   loginPage: LoginPage;
