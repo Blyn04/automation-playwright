@@ -213,6 +213,7 @@ export class RequisitionPage {
 
       await options.nth(targetIndex).click();
       console.log(chalk.green(`✔ Program selected: ${optionsInfo[targetIndex]}`));
+      
     } catch (error) {
       console.error(chalk.red(`Error in selectProgram: ${error}`));
       throw error;
