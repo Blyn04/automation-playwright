@@ -147,16 +147,35 @@ export class RequisitionPage {
       const dropdown = this.page.locator(RequisitionLocators.PICKER_DROPDOWN);
       await expect(dropdown).toBeVisible();
 
-      const enabledDate = dropdown
-        .locator(".ant-picker-cell:not(.ant-picker-cell-disabled) .ant-picker-cell-inner")
-        .first();
+      // Calculate target date (7 days from now)
+      const targetDate = new Date();
+      targetDate.setDate(targetDate.getDate() + 7);
+      const year = targetDate.getFullYear();
+      const month = String(targetDate.getMonth() + 1).padStart(2, "0");
+      const day = String(targetDate.getDate()).padStart(2, "0");
+      const targetDateStr = `${year}-${month}-${day}`;
 
-      await expect(enabledDate).toBeVisible();
-      await enabledDate.click();
+      console.log(chalk.blue(`Target date (7 days from now): ${targetDateStr}`));
+
+      const targetCell = dropdown.locator(`.ant-picker-cell[title="${targetDateStr}"]`);
+      if (!(await targetCell.isVisible())) {
+        console.log(chalk.yellow(`Target date cell for ${targetDateStr} not visible, trying to click next month button`));
+        const nextMonthBtn = dropdown.locator(".ant-picker-header-next-btn");
+        if (await nextMonthBtn.isVisible()) {
+          await nextMonthBtn.click();
+        } else {
+          const nextBtn = dropdown.locator(".ant-picker-next-btn");
+          await nextBtn.click();
+        }
+        await this.page.waitForTimeout(500);
+      }
+
+      await expect(targetCell).toBeVisible();
+      await targetCell.click();
 
       await expect(this.dateNeededInput).not.toHaveValue("");
 
-      console.log(chalk.green("✔ Date needed selected"));
+      console.log(chalk.green(`✔ Date needed selected: ${targetDateStr}`));
     } catch (error) {
       console.error(chalk.red(`Error in selectDateNeeded: ${error}`));
       throw error;
@@ -304,6 +323,12 @@ export class RequisitionPage {
 
   async clickConfirmAndSubmit() {
     try {
+      const checkbox = this.page.locator('input[type="checkbox"], .ant-checkbox-input').first();
+      if (await checkbox.isVisible()) {
+        console.log(chalk.blue("Responsibility checkbox detected, checking it..."));
+        await checkbox.check();
+      }
+
       await expect(this.confirmSubmitButton).toBeVisible();
       await expect(this.confirmSubmitButton).toBeEnabled();
       await this.confirmSubmitButton.click();
