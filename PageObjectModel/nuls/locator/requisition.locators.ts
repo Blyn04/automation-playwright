@@ -15,7 +15,7 @@ export const RequisitionLocators = {
   USAGE_TYPE_SELECT: 'select:has(option[value="Laboratory Experiment"])',
   FINALIZE_BUTTON: 'button.finalize-btn',
   CONFIRM_SUBMIT_BUTTON: '//button[.//span[text()="Confirm and Submit"]]',
-  ANT_SELECT_OPTION: '.ant-select-item-option-content',
+  ANT_SELECT_OPTION: '.ant-select-item-option',
   PICKER_DROPDOWN: '.ant-picker-dropdown:not(.ant-picker-dropdown-hidden)',
   SELECT_DROPDOWN: '.ant-select-dropdown:not(.ant-select-dropdown-hidden)',
 };

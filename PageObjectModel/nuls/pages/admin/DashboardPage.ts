@@ -25,12 +25,12 @@ export class DashboardPage {
     this.profileMenu = this.page.locator(ProfileLocators.PROFILE_MENU);
   }
 
-  async clickOKButtonModal() {
+  async clickOKButtonModal(): Promise<boolean> {
     try {
       const isVisible = await this.okButtonModal.isVisible().catch(() => false);
       if (!isVisible) {
         console.log(chalk.yellow("⚠ OK button modal not found, skipping"));
-        return;
+        return false;
       }
 
       await this.okButtonModal.waitFor({ state: "visible", timeout: 5000 });
@@ -39,6 +39,7 @@ export class DashboardPage {
       await this.okButtonModal.click();
 
       console.log(chalk.green("✔ OK button clicked"));
+      return true;
 
     } catch (error) {
       console.error(chalk.red(`Error in clickOKButtonModal: ${error}`));
@@ -46,12 +47,12 @@ export class DashboardPage {
     }
   }
 
-  async clickCloseButtonModal() {
+  async clickCloseButtonModal(): Promise<boolean> {
     try {
       const isVisible = await this.closeButtonModal.isVisible().catch(() => false);
       if (!isVisible) {
         console.log(chalk.yellow("⚠ Close button modal not found, skipping"));
-        return;
+        return false;
       }
 
       await this.closeButtonModal.waitFor({ state: "visible", timeout: 5000 });
@@ -60,6 +61,7 @@ export class DashboardPage {
       await this.closeButtonModal.click();
 
       console.log(chalk.green("✔ Close button clicked"));
+      return true;
     } catch (error) {
       console.error(chalk.red(`Error in clickCloseButtonModal: ${error}`));
       throw error;
@@ -68,11 +70,21 @@ export class DashboardPage {
 
   async dismissPostLoginModals() {
     try {
-      await this.page.waitForLoadState("networkidle");
+      // Wait for login redirection to complete
+      await this.page.waitForURL(/.*\/main.*/, { timeout: 15000 }).catch(() => {});
+      console.log(chalk.blue("Navigated to main page, waiting 3 seconds for post-login modals..."));
+      await this.page.waitForTimeout(3000);
 
       // Try the specific buttons first
-      await this.clickOKButtonModal();
-      await this.clickCloseButtonModal();
+      const okClicked = await this.clickOKButtonModal();
+      const closeClicked = await this.clickCloseButtonModal();
+
+      if (okClicked || closeClicked) {
+        // Wait a moment for modal to close
+        await this.page.waitForTimeout(1000);
+        console.log(chalk.green("✔ Post-login modals dismissed"));
+        return;
+      }
 
       // Fallback: if an Ant Design modal overlay is still blocking the page, dismiss it
       const modalOverlay = this.page.locator('div.ant-modal-wrap');
@@ -85,14 +97,14 @@ export class DashboardPage {
         const okBtn = this.page.locator('.ant-modal-wrap .ant-btn-primary, .ant-modal-wrap button:has-text("OK")').first();
         const okVisible = await okBtn.isVisible().catch(() => false);
         if (okVisible) {
-          await okBtn.click();
+          await okBtn.click({ timeout: 2000 }).catch(() => {});
           console.log(chalk.green("✔ Modal dismissed via OK button fallback"));
         } else {
           // Try clicking any close button inside the modal
           const closeBtn = this.page.locator('.ant-modal-wrap .ant-modal-close, .ant-modal-wrap button.close-btn').first();
           const closeVisible = await closeBtn.isVisible().catch(() => false);
           if (closeVisible) {
-            await closeBtn.click();
+            await closeBtn.click({ timeout: 2000 }).catch(() => {});
             console.log(chalk.green("✔ Modal dismissed via close button fallback"));
           } else {
             // Last resort: press Escape to dismiss

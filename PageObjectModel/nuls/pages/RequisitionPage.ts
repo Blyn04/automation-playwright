@@ -50,6 +50,14 @@ export class RequisitionPage {
     if (optionText) {
       const option = options.filter({ hasText: optionText });
       await expect(option.first()).toBeVisible({ timeout: 15000 });
+
+      // DEBUG
+      console.log(`=== DEBUG selectAntOption optionText="${optionText}" ===`);
+      const html = await dropdown.last().evaluate(el => el.outerHTML).catch(() => "failed to get html");
+      console.log("Dropdown HTML:", html);
+      const optHtml = await option.first().evaluate(el => el.outerHTML).catch(() => "failed to get option html");
+      console.log("Option to click HTML:", optHtml);
+
       await option.first().click();
       return;
     }
@@ -79,8 +87,52 @@ export class RequisitionPage {
     const item = itemName ?? process.env.REQUISITION_ITEM ?? "Beaker";
 
     try {
-      await this.selectAntOption(this.itemSelect, item);
-      console.log(chalk.green(`✔ Item selected: ${item}`));
+      await expect(this.itemSelect).toBeVisible();
+
+      // Wait for any previous dropdown leave animation to finish
+      const leavingDropdown = this.page.locator('.ant-select-dropdown.ant-slide-up-leave');
+      await leavingDropdown.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
+
+      await this.itemSelect.click();
+
+      const dropdown = this.page.locator(RequisitionLocators.SELECT_DROPDOWN);
+      await expect(dropdown.last()).toBeVisible();
+
+      // Find all options in this dropdown
+      const optionsLocator = dropdown.last().locator(RequisitionLocators.ANT_SELECT_OPTION);
+      await expect(optionsLocator.first()).toBeVisible({ timeout: 15000 });
+
+      // Let's inspect all options to find a suitable enabled one
+      const optionsInfo = await optionsLocator.evaluateAll(els => {
+        return els.map(el => ({
+          text: el.textContent?.trim() || "",
+          className: el.className,
+          isDisabled: el.classList.contains('ant-select-item-option-disabled')
+        }));
+      });
+
+      console.log("=== DEBUG Dropdown Options ===");
+      console.log(JSON.stringify(optionsInfo, null, 2));
+
+      // 1. Try to find an enabled option matching the requested item name
+      let targetIndex = optionsInfo.findIndex(opt => opt.text.toLowerCase().includes(item.toLowerCase()) && !opt.isDisabled);
+
+      // 2. If not found, fall back to the first enabled option in the list
+      if (targetIndex === -1) {
+        targetIndex = optionsInfo.findIndex(opt => !opt.isDisabled);
+        console.log(chalk.yellow(`⚠ Preferred item "${item}" is not available/enabled. Falling back to first enabled item.`));
+      }
+
+      if (targetIndex === -1) {
+        throw new Error("No enabled items found in the select dropdown!");
+      }
+
+      const selectedOptionText = optionsInfo[targetIndex].text;
+      console.log(chalk.blue(`Selecting item option: "${selectedOptionText}"`));
+
+      await optionsLocator.nth(targetIndex).click();
+
+      console.log(chalk.green(`✔ Item selected: ${selectedOptionText}`));
     } catch (error) {
       console.error(chalk.red(`Error in selectItem: ${error}`));
       throw error;
@@ -314,6 +366,20 @@ export class RequisitionPage {
     try {
       await expect(this.itemSelect).toBeVisible();
       await this.fillRequisitionForm();
+
+      // DEBUG: print all validation errors and page text
+      console.log("=== DEBUG: Form State & Validation Errors ===");
+      const errors = await this.page.evaluate(() => {
+        const errorElements = Array.from(document.querySelectorAll('.ant-form-item-explain, .ant-form-item-explain-error, [role="alert"]'));
+        const visibleText = document.body.innerText;
+        return {
+          errors: errorElements.map(el => el.textContent?.trim()),
+          visibleText: visibleText.split('\n').filter(line => line.trim().length > 0)
+        };
+      });
+      console.log(JSON.stringify(errors, null, 2));
+      console.log("=========================");
+
       await this.clickFinalize();
       await this.clickConfirmAndSubmit();
 
