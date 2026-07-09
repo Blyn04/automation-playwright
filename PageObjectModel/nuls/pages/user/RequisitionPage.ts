@@ -20,7 +20,7 @@ export class RequisitionPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.itemSelect = this.page.locator(RequisitionLocators.ITEM_SELECT);
+    this.itemSelect = this.page.locator(RequisitionLocators.ITEM_SELECT).first();
     this.dateNeededInput = this.page.locator(RequisitionLocators.DATE_NEEDED_INPUT);
     this.programSelect = this.page.locator(RequisitionLocators.PROGRAM_SELECT);
     this.timeFromInput = this.page.locator(RequisitionLocators.TIME_FROM_INPUT);
@@ -35,36 +35,38 @@ export class RequisitionPage {
     this.addItemRowButton = this.page.getByRole('button', { name: 'Add Item Row' });
   }
 
-  private async selectAntOption(trigger: Locator, optionText?: string) {
+  private async openSelectDropdown(trigger: Locator): Promise<Locator> {
     await expect(trigger).toBeVisible();
 
-    // Wait for any previous dropdown leave animation to finish
     const leavingDropdown = this.page.locator('.ant-select-dropdown.ant-slide-up-leave');
     await leavingDropdown.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
 
-    await trigger.click();
+    await trigger.locator('.ant-select-selector').click();
 
-    const dropdown = this.page.locator(RequisitionLocators.SELECT_DROPDOWN);
-    await expect(dropdown.last()).toBeVisible();
+    const combobox = trigger.locator('[role="combobox"]');
+    await expect(combobox).toHaveAttribute('aria-controls', /.+/);
+    const dropdownId = await combobox.getAttribute('aria-controls');
+    const dropdown = this.page.locator(`#${dropdownId}`);
 
-    const options = dropdown.last().locator(RequisitionLocators.ANT_SELECT_OPTION);
+    await expect(dropdown).toBeVisible();
+
+    const options = dropdown.locator(RequisitionLocators.ANT_SELECT_OPTION);
+    await expect(options.first()).toBeVisible({ timeout: 15000 });
+
+    return dropdown;
+  }
+
+  private async selectAntOption(trigger: Locator, optionText?: string) {
+    const dropdown = await this.openSelectDropdown(trigger);
+    const options = dropdown.locator(RequisitionLocators.ANT_SELECT_OPTION);
 
     if (optionText) {
       const option = options.filter({ hasText: optionText });
       await expect(option.first()).toBeVisible({ timeout: 15000 });
-
-      // DEBUG
-      console.log(`=== DEBUG selectAntOption optionText="${optionText}" ===`);
-      const html = await dropdown.last().evaluate(el => el.outerHTML).catch(() => "failed to get html");
-      console.log("Dropdown HTML:", html);
-      const optHtml = await option.first().evaluate(el => el.outerHTML).catch(() => "failed to get option html");
-      console.log("Option to click HTML:", optHtml);
-
       await option.first().click();
       return;
     }
 
-    await expect(options.first()).toBeVisible({ timeout: 15000 });
     await options.first().click();
   }
 
@@ -91,18 +93,8 @@ export class RequisitionPage {
     try {
       await expect(this.itemSelect).toBeVisible();
 
-      // Wait for any previous dropdown leave animation to finish
-      const leavingDropdown = this.page.locator('.ant-select-dropdown.ant-slide-up-leave');
-      await leavingDropdown.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
-
-      await this.itemSelect.click();
-
-      const dropdown = this.page.locator(RequisitionLocators.SELECT_DROPDOWN);
-      await expect(dropdown.last()).toBeVisible();
-
-      // Find all options in this dropdown
-      const optionsLocator = dropdown.last().locator(RequisitionLocators.ANT_SELECT_OPTION);
-      await expect(optionsLocator.first()).toBeVisible({ timeout: 15000 });
+      const dropdown = await this.openSelectDropdown(this.itemSelect);
+      let optionsLocator = dropdown.locator(RequisitionLocators.ANT_SELECT_OPTION);
 
       // Let's inspect all options to find a suitable enabled one
       let optionsInfo = await optionsLocator.evaluateAll(els => {
@@ -157,10 +149,8 @@ export class RequisitionPage {
           await this.deleteItemRow(equipmentRowIndex);
           await this.page.waitForTimeout(2000);
 
-          // Re-open the dropdown
-          await this.itemSelect.click();
-          await expect(dropdown.last()).toBeVisible();
-          await expect(optionsLocator.first()).toBeVisible({ timeout: 15000 });
+          const refreshedDropdown = await this.openSelectDropdown(this.itemSelect);
+          optionsLocator = refreshedDropdown.locator(RequisitionLocators.ANT_SELECT_OPTION);
 
           // Re-fetch options
           optionsInfo = await optionsLocator.evaluateAll(els => {
@@ -195,12 +185,15 @@ export class RequisitionPage {
   async selectDateNeeded() {
     try {
       await expect(this.dateNeededInput).toBeVisible();
+
+      const leavingPicker = this.page.locator('.ant-picker-dropdown.ant-slide-up-leave');
+      await leavingPicker.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
+
       await this.dateNeededInput.click();
 
       const dropdown = this.page.locator(RequisitionLocators.PICKER_DROPDOWN);
       await expect(dropdown).toBeVisible();
 
-      // Calculate target date (7 days from now)
       const targetDate = new Date();
       targetDate.setDate(targetDate.getDate() + 7);
       const year = targetDate.getFullYear();
@@ -210,21 +203,27 @@ export class RequisitionPage {
 
       console.log(chalk.blue(`Target date (7 days from now): ${targetDateStr}`));
 
-      const targetCell = dropdown.locator(`.ant-picker-cell[title="${targetDateStr}"]`);
-      if (!(await targetCell.isVisible())) {
-        console.log(chalk.yellow(`Target date cell for ${targetDateStr} not visible, trying to click next month button`));
-        const nextMonthBtn = dropdown.locator(".ant-picker-header-next-btn");
-        if (await nextMonthBtn.isVisible()) {
-          await nextMonthBtn.click();
-        } else {
-          const nextBtn = dropdown.locator(".ant-picker-next-btn");
-          await nextBtn.click();
+      const targetCell = dropdown.locator(
+        `.ant-picker-cell[title="${targetDateStr}"]:not(.ant-picker-cell-disabled)`
+      );
+
+      let dateSelected = false;
+      for (let i = 0; i < 12; i++) {
+        if (await targetCell.count() > 0) {
+          await targetCell.click();
+          dateSelected = true;
+          break;
         }
-        await this.page.waitForTimeout(500);
+
+        const nextMonthBtn = dropdown.locator('.ant-picker-header-next-btn');
+        await expect(nextMonthBtn).toBeVisible({ timeout: 5000 });
+        await nextMonthBtn.click();
+        await this.page.waitForTimeout(300);
       }
 
-      await expect(targetCell).toBeVisible();
-      await targetCell.click();
+      if (!dateSelected) {
+        throw new Error(`Could not select target date ${targetDateStr} in date picker`);
+      }
 
       await expect(this.dateNeededInput).not.toHaveValue("");
 
@@ -240,13 +239,9 @@ export class RequisitionPage {
 
     try {
       await expect(this.programSelect).toBeVisible();
-      await this.programSelect.click();
 
-      const dropdown = this.page.locator(RequisitionLocators.SELECT_DROPDOWN);
-      await expect(dropdown.last()).toBeVisible();
-
-      const options = dropdown.last().locator(RequisitionLocators.ANT_SELECT_OPTION);
-      await expect(options.first()).toBeVisible({ timeout: 15000 });
+      const dropdown = await this.openSelectDropdown(this.programSelect);
+      const options = dropdown.locator(RequisitionLocators.ANT_SELECT_OPTION);
 
       const optionsInfo = await options.evaluateAll(els => {
         return els.map(el => el.textContent?.trim() || "");
