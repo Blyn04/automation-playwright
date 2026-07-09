@@ -103,7 +103,7 @@ export class RequisitionPage {
       await expect(optionsLocator.first()).toBeVisible({ timeout: 15000 });
 
       // Let's inspect all options to find a suitable enabled one
-      const optionsInfo = await optionsLocator.evaluateAll(els => {
+      let optionsInfo = await optionsLocator.evaluateAll(els => {
         return els.map(el => ({
           text: el.textContent?.trim() || "",
           className: el.className,
@@ -114,17 +114,68 @@ export class RequisitionPage {
       console.log("=== DEBUG Dropdown Options ===");
       console.log(JSON.stringify(optionsInfo, null, 2));
 
-      // 1. Try to find an enabled option matching the requested item name
-      let targetIndex = optionsInfo.findIndex(opt => opt.text.toLowerCase().includes(item.toLowerCase()) && !opt.isDisabled);
+      const isEquipment = (text: string) => {
+        const parts = text.split('|');
+        return parts.length > 2 && parts[2].trim().toLowerCase() === 'equipment';
+      };
 
-      // 2. If not found, fall back to the first enabled option in the list
+      // 1. Try to find an enabled option matching the requested item name AND of type Equipment
+      let targetIndex = optionsInfo.findIndex(opt => 
+        opt.text.toLowerCase().includes(item.toLowerCase()) && 
+        !opt.isDisabled && 
+        isEquipment(opt.text)
+      );
+
+      // 2. If not found, fall back to the first enabled option that is of type Equipment
       if (targetIndex === -1) {
-        targetIndex = optionsInfo.findIndex(opt => !opt.isDisabled);
-        console.log(chalk.yellow(`⚠ Preferred item "${item}" is not available/enabled. Falling back to first enabled item.`));
+        targetIndex = optionsInfo.findIndex(opt => !opt.isDisabled && isEquipment(opt.text));
+        console.log(chalk.yellow(`⚠ Preferred item "${item}" (Equipment) is not available/enabled. Falling back to first enabled Equipment item.`));
+      }
+
+      // 3. If still not found (e.g. all Equipment options are disabled because they're already in the table),
+      // we attempt to free one up by deleting an existing Equipment row from the table.
+      if (targetIndex === -1) {
+        console.log(chalk.yellow("No enabled Equipment options found in dropdown. Attempting to free one up by deleting an existing Equipment row..."));
+
+        const equipmentRowIndex = await this.page.evaluate(() => {
+          const rows = Array.from(document.querySelectorAll('table tbody tr'));
+          return rows.findIndex(row => {
+            const deleteBtn = row.querySelector('button[aria-label="delete"], button:has(span[aria-label="delete"]), button:has(svg)');
+            if (!deleteBtn) return false;
+            const cells = Array.from(row.querySelectorAll('td'));
+            if (cells.length > 2) {
+              const categoryText = cells[2].textContent?.trim() || '';
+              return categoryText.toLowerCase() === 'equipment';
+            }
+            return false;
+          });
+        });
+
+        if (equipmentRowIndex !== -1) {
+          await this.deleteItemRow(equipmentRowIndex);
+          await this.page.waitForTimeout(2000);
+
+          // Re-open the dropdown
+          await this.itemSelect.click();
+          await expect(dropdown.last()).toBeVisible();
+          await expect(optionsLocator.first()).toBeVisible({ timeout: 15000 });
+
+          // Re-fetch options
+          optionsInfo = await optionsLocator.evaluateAll(els => {
+            return els.map(el => ({
+              text: el.textContent?.trim() || "",
+              className: el.className,
+              isDisabled: el.classList.contains('ant-select-item-option-disabled')
+            }));
+          });
+
+          // Re-evaluate targetIndex
+          targetIndex = optionsInfo.findIndex(opt => !opt.isDisabled && isEquipment(opt.text));
+        }
       }
 
       if (targetIndex === -1) {
-        throw new Error("No enabled items found in the select dropdown!");
+        throw new Error("No enabled Equipment items found in the select dropdown!");
       }
 
       const selectedOptionText = optionsInfo[targetIndex].text;
@@ -325,6 +376,7 @@ export class RequisitionPage {
   async clickConfirmAndSubmit() {
     try {
       const checkbox = this.page.locator('input[type="checkbox"], .ant-checkbox-input').first();
+      await checkbox.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
       if (await checkbox.isVisible()) {
         console.log(chalk.blue("Responsibility checkbox detected, checking it..."));
         await checkbox.check();
