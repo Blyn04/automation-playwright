@@ -18,4 +18,5 @@ export const RequisitionLocators = {
   ANT_SELECT_OPTION: '.ant-select-item-option',
   PICKER_DROPDOWN: '.ant-picker-dropdown:not(.ant-picker-dropdown-hidden)',
   SELECT_DROPDOWN: '.ant-select-dropdown:not(.ant-select-dropdown-hidden)',
+  RESPONSIBILITY_CHECKBOX: 'input.ant-checkbox-input[type="checkbox"]',
 };

@@ -14,6 +14,7 @@ export class RequisitionPage {
   private readonly usageTypeSelect: Locator;
   private readonly finalizeButton: Locator;
   private readonly confirmSubmitButton: Locator;
+  private readonly responsibilityCheckbox: Locator;
   private readonly noteInput: Locator;
   private readonly addItemRowButton: Locator;
 
@@ -29,6 +30,7 @@ export class RequisitionPage {
     this.usageTypeSelect = this.page.locator(RequisitionLocators.USAGE_TYPE_SELECT);
     this.finalizeButton = this.page.locator(RequisitionLocators.FINALIZE_BUTTON);
     this.confirmSubmitButton = this.page.locator(RequisitionLocators.CONFIRM_SUBMIT_BUTTON);
+    this.responsibilityCheckbox = this.page.locator(RequisitionLocators.RESPONSIBILITY_CHECKBOX);
     this.noteInput = this.page.getByPlaceholder('Leave a note for the custodian');
     this.addItemRowButton = this.page.getByRole('button', { name: 'Add Item Row' });
   }
@@ -320,7 +322,7 @@ export class RequisitionPage {
 
 
   async fillRoom(roomNumber?: string) {
-    const room = roomNumber ?? process.env.REQUISITION_ROOM ?? "101";
+    const room = roomNumber ?? process.env.REQUISITION_ROOM ?? (Math.floor(Math.random() * 800) + 101).toString();
 
     try {
       await expect(this.roomInput).toBeVisible();
@@ -375,11 +377,10 @@ export class RequisitionPage {
 
   async clickConfirmAndSubmit() {
     try {
-      const checkbox = this.page.locator('input[type="checkbox"], .ant-checkbox-input').first();
-      await checkbox.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
-      if (await checkbox.isVisible()) {
+      await this.responsibilityCheckbox.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
+      if (await this.responsibilityCheckbox.isVisible()) {
         console.log(chalk.blue("Responsibility checkbox detected, checking it..."));
-        await checkbox.check();
+        await this.responsibilityCheckbox.check();
       }
 
       await expect(this.confirmSubmitButton).toBeVisible();
