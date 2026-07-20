@@ -245,7 +245,11 @@ export class DashboardPage {
       await expect(this.requisitionMenu).toBeVisible();
       await this.clickRequisitionMenu();
 
-      console.log(chalk.blue("✔ Successfully navigated to Requisition"));
+      await this.page.reload({ waitUntil: "domcontentloaded" });
+      await expect(this.page.locator("button.finalize-btn")).toBeVisible({ timeout: 30000 });
+      await expect(this.page.locator("table tbody tr .ant-select").first()).toBeVisible();
+
+      console.log(chalk.blue("✔ Successfully navigated to Requisition (fresh form)"));
     } catch (error) {
       console.error(chalk.red(`Requisition navigation failed: ${error}`));
       throw error;

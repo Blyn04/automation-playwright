@@ -35,29 +35,114 @@ export class RequisitionPage {
     this.addItemRowButton = this.page.getByRole('button', { name: 'Add Item Row' });
   }
 
-  private async openSelectDropdown(trigger: Locator): Promise<Locator> {
+  private async openItemSelectDropdown(searchText: string): Promise<Locator> {
+    await this.itemSelect.scrollIntoViewIfNeeded();
+    await expect(this.itemSelect).toBeVisible();
+
+    await this.page
+      .locator(".ant-select-dropdown.ant-slide-up-leave")
+      .waitFor({ state: "hidden", timeout: 5000 })
+      .catch(() => {});
+
+    const combobox = this.itemSelect.locator('[role="combobox"]');
+    await this.itemSelect.locator(".ant-select-selector").click();
+
+    if ((await combobox.getAttribute("aria-expanded")) !== "true") {
+      await combobox.click();
+    }
+
+    await expect(combobox).toHaveAttribute("aria-expanded", "true", { timeout: 10000 });
+
+    const dropdownId = await combobox.getAttribute("aria-controls");
+    const dropdown = dropdownId
+      ? this.page.locator(
+          `.ant-select-dropdown:not(.ant-select-dropdown-hidden):has(#${dropdownId})`
+        )
+      : this.page.locator(RequisitionLocators.SELECT_DROPDOWN).last();
+
+    await expect(dropdown).toBeVisible({ timeout: 15000 });
+
+    let options = dropdown.locator(RequisitionLocators.ANT_SELECT_OPTION);
+    if ((await options.count()) === 0) {
+      await this.typeInSelectSearch(this.itemSelect, searchText);
+    }
+
+    await dropdown
+      .locator(".ant-spin")
+      .waitFor({ state: "hidden", timeout: 15000 })
+      .catch(() => {});
+
+    options = dropdown.locator(RequisitionLocators.ANT_SELECT_OPTION);
+    await expect(options.first()).toBeVisible({ timeout: 20000 });
+
+    return dropdown;
+  }
+
+  private async typeInSelectSearch(trigger: Locator, text: string) {
+    const searchInput = trigger.locator(".ant-select-selection-search-input");
+    await searchInput.click();
+    await searchInput.fill("");
+    await searchInput.pressSequentially(text, { delay: 75 });
+  }
+
+  private async openSelectDropdown(trigger: Locator, searchText?: string): Promise<Locator> {
+    await trigger.scrollIntoViewIfNeeded();
     await expect(trigger).toBeVisible();
 
-    const leavingDropdown = this.page.locator('.ant-select-dropdown.ant-slide-up-leave');
-    await leavingDropdown.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
-
-    await trigger.locator('.ant-select-selector').click();
+    await this.page
+      .locator(".ant-select-dropdown.ant-slide-up-leave")
+      .waitFor({ state: "hidden", timeout: 5000 })
+      .catch(() => {});
 
     const combobox = trigger.locator('[role="combobox"]');
-    await expect(combobox).toHaveAttribute('aria-controls', /.+/);
-    const dropdownId = await combobox.getAttribute('aria-controls');
-    const dropdown = this.page.locator(`#${dropdownId}`);
+    await expect(combobox).toBeVisible();
 
-    await expect(dropdown).toBeVisible();
+    await trigger.locator(".ant-select-selector").click();
+
+    if ((await combobox.getAttribute("aria-expanded")) !== "true") {
+      await combobox.click();
+    }
+
+    await expect(combobox).toHaveAttribute("aria-expanded", "true", { timeout: 10000 });
+
+    if (searchText) {
+      await this.typeInSelectSearch(trigger, searchText);
+    }
+
+    const dropdownId = await combobox.getAttribute("aria-controls");
+    let dropdown = dropdownId
+      ? this.page.locator(
+          `.ant-select-dropdown:not(.ant-select-dropdown-hidden):has(#${dropdownId})`
+        )
+      : this.page.locator(RequisitionLocators.SELECT_DROPDOWN).last();
+
+    if (dropdownId && (await dropdown.count()) === 0) {
+      await combobox.click();
+      await expect(combobox).toHaveAttribute("aria-expanded", "true", { timeout: 10000 });
+      dropdown = this.page.locator(
+        `.ant-select-dropdown:not(.ant-select-dropdown-hidden):has(#${dropdownId})`
+      );
+    }
+
+    if ((await dropdown.count()) === 0) {
+      dropdown = this.page.locator(RequisitionLocators.SELECT_DROPDOWN).last();
+    }
+
+    await expect(dropdown).toBeVisible({ timeout: 15000 });
+
+    await dropdown
+      .locator(".ant-spin")
+      .waitFor({ state: "hidden", timeout: 15000 })
+      .catch(() => {});
 
     const options = dropdown.locator(RequisitionLocators.ANT_SELECT_OPTION);
-    await expect(options.first()).toBeVisible({ timeout: 15000 });
+    await expect(options.first()).toBeVisible({ timeout: 20000 });
 
     return dropdown;
   }
 
   private async selectAntOption(trigger: Locator, optionText?: string) {
-    const dropdown = await this.openSelectDropdown(trigger);
+    const dropdown = await this.openSelectDropdown(trigger, optionText);
     const options = dropdown.locator(RequisitionLocators.ANT_SELECT_OPTION);
 
     if (optionText) {
@@ -93,7 +178,7 @@ export class RequisitionPage {
     try {
       await expect(this.itemSelect).toBeVisible();
 
-      const dropdown = await this.openSelectDropdown(this.itemSelect);
+      const dropdown = await this.openItemSelectDropdown(item);
       let optionsLocator = dropdown.locator(RequisitionLocators.ANT_SELECT_OPTION);
 
       // Let's inspect all options to find a suitable enabled one
@@ -149,7 +234,7 @@ export class RequisitionPage {
           await this.deleteItemRow(equipmentRowIndex);
           await this.page.waitForTimeout(2000);
 
-          const refreshedDropdown = await this.openSelectDropdown(this.itemSelect);
+          const refreshedDropdown = await this.openItemSelectDropdown(item);
           optionsLocator = refreshedDropdown.locator(RequisitionLocators.ANT_SELECT_OPTION);
 
           // Re-fetch options
@@ -240,7 +325,7 @@ export class RequisitionPage {
     try {
       await expect(this.programSelect).toBeVisible();
 
-      const dropdown = await this.openSelectDropdown(this.programSelect);
+      const dropdown = await this.openSelectDropdown(this.programSelect, program);
       const options = dropdown.locator(RequisitionLocators.ANT_SELECT_OPTION);
 
       const optionsInfo = await options.evaluateAll(els => {
