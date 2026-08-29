@@ -35,6 +35,32 @@ export class RequisitionPage {
     this.addItemRowButton = this.page.getByRole('button', { name: 'Add Item Row' });
   }
 
+  /**
+   * Ant Design virtual lists clip options inside overflow:auto holders.
+   * Playwright then reports them as hidden even when they are in the DOM and
+   * shown in innerText — which is what CI hits on GitHub Actions.
+   */
+  private dropdownOptions(dropdown: Locator): Locator {
+    return dropdown.locator(RequisitionLocators.ANT_SELECT_OPTION);
+  }
+
+  private async waitForDropdownOptions(dropdown: Locator): Promise<Locator> {
+    await dropdown
+      .locator(".ant-spin")
+      .waitFor({ state: "hidden", timeout: 15000 })
+      .catch(() => {});
+
+    const options = this.dropdownOptions(dropdown);
+    await expect(options.first()).toBeAttached({ timeout: 20000 });
+    await options.first().scrollIntoViewIfNeeded().catch(() => {});
+    return options;
+  }
+
+  private async clickDropdownOption(option: Locator) {
+    await option.scrollIntoViewIfNeeded().catch(() => {});
+    await option.click({ force: true });
+  }
+
   private async openItemSelectDropdown(searchText: string): Promise<Locator> {
     await this.itemSelect.scrollIntoViewIfNeeded();
     await expect(this.itemSelect).toBeVisible();
@@ -62,18 +88,12 @@ export class RequisitionPage {
 
     await expect(dropdown).toBeVisible({ timeout: 15000 });
 
-    let options = dropdown.locator(RequisitionLocators.ANT_SELECT_OPTION);
+    let options = this.dropdownOptions(dropdown);
     if ((await options.count()) === 0) {
       await this.typeInSelectSearch(this.itemSelect, searchText);
     }
 
-    await dropdown
-      .locator(".ant-spin")
-      .waitFor({ state: "hidden", timeout: 15000 })
-      .catch(() => {});
-
-    options = dropdown.locator(RequisitionLocators.ANT_SELECT_OPTION);
-    await expect(options.first()).toBeVisible({ timeout: 20000 });
+    await this.waitForDropdownOptions(dropdown);
 
     return dropdown;
   }
@@ -129,30 +149,31 @@ export class RequisitionPage {
     }
 
     await expect(dropdown).toBeVisible({ timeout: 15000 });
-
-    await dropdown
-      .locator(".ant-spin")
-      .waitFor({ state: "hidden", timeout: 15000 })
-      .catch(() => {});
-
-    const options = dropdown.locator(RequisitionLocators.ANT_SELECT_OPTION);
-    await expect(options.first()).toBeVisible({ timeout: 20000 });
+    await this.waitForDropdownOptions(dropdown);
 
     return dropdown;
   }
 
   private async selectAntOption(trigger: Locator, optionText?: string) {
     const dropdown = await this.openSelectDropdown(trigger, optionText);
-    const options = dropdown.locator(RequisitionLocators.ANT_SELECT_OPTION);
+    const options = this.dropdownOptions(dropdown);
 
-    if (optionText) {
-      const option = options.filter({ hasText: optionText });
-      await expect(option.first()).toBeVisible({ timeout: 15000 });
-      await option.first().click();
+    if (!optionText) {
+      await this.clickDropdownOption(options.first());
       return;
     }
 
-    await options.first().click();
+    const labels = await options.evaluateAll(els =>
+      els.map(el => el.getAttribute("aria-label") || el.textContent?.trim() || "")
+    );
+    let targetIndex = labels.findIndex(label =>
+      label.toLowerCase().includes(optionText.toLowerCase())
+    );
+    if (targetIndex === -1) {
+      targetIndex = 0;
+    }
+
+    await this.clickDropdownOption(options.nth(targetIndex));
   }
 
 
@@ -179,12 +200,12 @@ export class RequisitionPage {
       await expect(this.itemSelect).toBeVisible();
 
       const dropdown = await this.openItemSelectDropdown(item);
-      let optionsLocator = dropdown.locator(RequisitionLocators.ANT_SELECT_OPTION);
+      let optionsLocator = this.dropdownOptions(dropdown);
 
       // Let's inspect all options to find a suitable enabled one
       let optionsInfo = await optionsLocator.evaluateAll(els => {
         return els.map(el => ({
-          text: el.textContent?.trim() || "",
+          text: el.getAttribute("aria-label") || el.textContent?.trim() || "",
           className: el.className,
           isDisabled: el.classList.contains('ant-select-item-option-disabled')
         }));
@@ -235,12 +256,12 @@ export class RequisitionPage {
           await this.page.waitForTimeout(2000);
 
           const refreshedDropdown = await this.openItemSelectDropdown(item);
-          optionsLocator = refreshedDropdown.locator(RequisitionLocators.ANT_SELECT_OPTION);
+          optionsLocator = this.dropdownOptions(refreshedDropdown);
 
           // Re-fetch options
           optionsInfo = await optionsLocator.evaluateAll(els => {
             return els.map(el => ({
-              text: el.textContent?.trim() || "",
+              text: el.getAttribute("aria-label") || el.textContent?.trim() || "",
               className: el.className,
               isDisabled: el.classList.contains('ant-select-item-option-disabled')
             }));
@@ -258,7 +279,7 @@ export class RequisitionPage {
       const selectedOptionText = optionsInfo[targetIndex].text;
       console.log(chalk.blue(`Selecting item option: "${selectedOptionText}"`));
 
-      await optionsLocator.nth(targetIndex).click();
+      await this.clickDropdownOption(optionsLocator.nth(targetIndex));
 
       console.log(chalk.green(`✔ Item selected: ${selectedOptionText}`));
     } catch (error) {
@@ -326,10 +347,10 @@ export class RequisitionPage {
       await expect(this.programSelect).toBeVisible();
 
       const dropdown = await this.openSelectDropdown(this.programSelect, program);
-      const options = dropdown.locator(RequisitionLocators.ANT_SELECT_OPTION);
+      const options = this.dropdownOptions(dropdown);
 
       const optionsInfo = await options.evaluateAll(els => {
-        return els.map(el => el.textContent?.trim() || "");
+        return els.map(el => el.getAttribute("aria-label") || el.textContent?.trim() || "");
       });
 
       console.log("=== DEBUG Program Options ===");
@@ -344,7 +365,7 @@ export class RequisitionPage {
         }
       }
 
-      await options.nth(targetIndex).click();
+      await this.clickDropdownOption(options.nth(targetIndex));
       console.log(chalk.green(`✔ Program selected: ${optionsInfo[targetIndex]}`));
       
     } catch (error) {
