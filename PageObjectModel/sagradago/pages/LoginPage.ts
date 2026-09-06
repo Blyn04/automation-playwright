@@ -7,20 +7,28 @@ import chalk from "chalk";
 export class LoginPage {
   private readonly page: Page;
   private readonly signInHeaderButton: Locator;
+  private readonly signInModal: Locator;
   private readonly emailAddressInput: Locator;
   private readonly passwordInput: Locator;
   private readonly loginButton: Locator;
+  private readonly forgotPasswordLink: Locator;
   private readonly errorMessage: Locator;
   private readonly profilePic: Locator;
+  private readonly adminDashboard: Locator;
 
   constructor(page: Page) {
     this.page = page;
     this.signInHeaderButton = this.page.locator(LoginPageLocators.SIGN_IN_HEADER_BUTTON);
-    this.emailAddressInput = this.page.locator(LoginPageLocators.EMAIL_INPUT);
-    this.passwordInput = this.page.locator(LoginPageLocators.PASSWORD_INPUT);
-    this.loginButton = this.page.locator(LoginPageLocators.SIGN_IN_BUTTON);
-    this.errorMessage = this.page.locator(LoginPageLocators.ERROR_MESSAGE);
+    this.signInModal = this.page
+      .locator(LoginPageLocators.MODAL_CARD)
+      .filter({ has: this.page.locator(LoginPageLocators.TITLE, { hasText: /^Sign In$/ }) });
+    this.emailAddressInput = this.signInModal.locator(LoginPageLocators.EMAIL_INPUT);
+    this.passwordInput = this.signInModal.locator(LoginPageLocators.PASSWORD_INPUT);
+    this.loginButton = this.signInModal.locator(LoginPageLocators.SIGN_IN_BUTTON);
+    this.forgotPasswordLink = this.signInModal.locator(LoginPageLocators.FORGOT_PASSWORD_LINK);
+    this.errorMessage = this.signInModal.locator(LoginPageLocators.ERROR_MESSAGE);
     this.profilePic = this.page.locator(LoginPageLocators.PROFILE_PIC);
+    this.adminDashboard = this.page.locator(".dashboard-container, .dashboard-loading-container");
   }
 
   async navigateToLoginPage() {
@@ -28,7 +36,7 @@ export class LoginPage {
       await gotoApp(this.page, getSagradaGoUrl());
       await expect(this.signInHeaderButton).toBeVisible({ timeout: 15_000 });
       await this.signInHeaderButton.click();
-      await expect(this.page.locator(LoginPageLocators.TITLE)).toHaveText(/Sign In/i);
+      await expect(this.signInModal.locator(LoginPageLocators.TITLE)).toHaveText(/Sign In/i);
       await expect(this.emailAddressInput).toBeVisible({ timeout: 15_000 });
       console.log(chalk.green(`✔ Opened SagradaGo sign-in`));
     } catch (error) {
@@ -102,18 +110,21 @@ export class LoginPage {
     }
   }
 
+  async clickForgotPasswordLink() {
+    await expect(this.forgotPasswordLink).toBeVisible();
+    await this.forgotPasswordLink.click();
+    console.log(chalk.green("✔ Forgot Password link clicked"));
+  }
+
   async expectLoginSuccess() {
-    const errorVisible = this.errorMessage.waitFor({ state: "visible", timeout: 20_000 }).then(async () => {
+    const signedIn = this.profilePic.or(this.adminDashboard);
+    await expect(this.errorMessage.or(signedIn)).toBeVisible({ timeout: 25_000 });
+
+    if (await this.errorMessage.isVisible()) {
       throw new Error(`Login failed: ${(await this.errorMessage.textContent())?.trim() || "unknown error"}`);
-    });
+    }
 
-    await Promise.race([
-      this.profilePic.waitFor({ state: "visible", timeout: 20_000 }),
-      this.page.waitForURL(/\/admin/, { timeout: 20_000 }),
-      errorVisible,
-    ]);
-
-    await expect(this.page.locator(LoginPageLocators.TITLE)).toBeHidden();
+    await expect(this.signInModal).toBeHidden();
     console.log(chalk.blue("✔ Login flow completed"));
   }
 
