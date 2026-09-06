@@ -4,4 +4,5 @@ export const SagradaGoApi = {
   CREATE_USER: "/createUser",
   CHECK_EMAIL: "/checkEmail",
   CHECK_CONTACT: "/checkContact",
+  FIND_USER: "/findUser",
 };

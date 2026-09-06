@@ -1,0 +1,15 @@
+export const DashboardLocators = {
+  CONTAINER: ".dashboard-container",
+  LOADING: ".dashboard-loading-container",
+  TITLE: ".dashboard-title",
+  SUBTITLE: ".dashboard-subtitle",
+  STATS_GRID: ".dashboard-stats-grid",
+  STAT_CARD: ".dashboard-stat-card",
+  SIDEBAR: ".admin-sider",
+  LOGO: ".admin-logo",
+  MENU: ".custom-admin-menu",
+  MENU_DASHBOARD: '.custom-admin-menu .ant-menu-item:has-text("Dashboard")',
+  MENU_BOOKINGS: '.custom-admin-menu .ant-menu-item:has-text("Bookings")',
+  MENU_ACCOUNTS: '.custom-admin-menu .ant-menu-item:has-text("Accounts")',
+  LOGOUT_BUTTON: ".admin-logout button",
+};
