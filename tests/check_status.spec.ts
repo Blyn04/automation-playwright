@@ -23,7 +23,6 @@ test('Check Status Page', async ({ loginPage, dashboardPage, page }) => {
   console.log("Table Rows:");
   console.log(JSON.stringify(rows, null, 2));
 
-  // Let's also check Return Items Page
   console.log("Navigating to Return Items...");
   const returnMenu = page.locator('//li[@role="menuitem"]//span[text()="Return Items"]');
   await expect(returnMenu).toBeVisible();
