@@ -1,5 +1,6 @@
 import { expect, Locator, Page } from "@playwright/test";
 import { LoginPageLocators } from "../locator/login.locators";
+import { gotoApp } from "../utils/navigation";
 import chalk from "chalk";
 
 export class LoginPage {
@@ -16,13 +17,14 @@ export class LoginPage {
   }
 
   async navigateToLoginPage() {
-    const webUrl = process.env.WEB_URL as string;
+    const webUrl = process.env.WEB_URL?.trim();
     try {
       if (!webUrl) {
         throw new Error("WEB_URL is not set");
       }
-        await this.page.goto(webUrl);
-        console.log(chalk.green(`✔ Navigated to ${webUrl}`));
+      await gotoApp(this.page, webUrl);
+      await expect(this.emailAddressInput).toBeVisible({ timeout: 15_000 });
+      console.log(chalk.green(`✔ Navigated to ${webUrl}`));
 
     } catch (error) {
         console.error(chalk.red(`Error in navigateToLoginPage: ${error}`));

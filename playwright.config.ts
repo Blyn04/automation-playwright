@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 import dotenv from "dotenv";
-dotenv.config();
+dotenv.config({ quiet: true });
 
 /**
  * Read environment variables from file.
@@ -19,6 +19,10 @@ export default defineConfig({
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
+  timeout: process.env.CI ? 60_000 : 30_000,
+  expect: {
+    timeout: process.env.CI ? 15_000 : 5_000,
+  },
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
@@ -31,8 +35,12 @@ export default defineConfig({
     // baseURL: 'http://localhost:3000',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    headless: process.env.CI ? true : false, 
+    headless: process.env.CI ? true : false,
+    navigationTimeout: 45_000,
+    actionTimeout: process.env.CI ? 15_000 : 0,
+    ignoreHTTPSErrors: true,
     trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
   },
 
   /* Configure projects for major browsers */
