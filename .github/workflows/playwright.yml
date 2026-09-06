@@ -15,45 +15,31 @@ jobs:
         node-version: lts/*
     - name: Install dependencies
       run: npm ci
-    - name: Verify WEB_URL serves the app
+    - name: Verify SagradaGo is reachable
       id: health
       env:
-        WEB_URL: ${{ secrets.WEB_URL }}
+        SAGRADA_WEB_URL: ${{ secrets.SAGRADA_WEB_URL }}
       run: |
-        if [ -z "$WEB_URL" ]; then
-          echo "::error::WEB_URL secret is not set. Add it in Settings → Secrets and variables → Actions."
+        URL="${SAGRADA_WEB_URL:-https://www.sagradago.com}"
+        HTML=$(curl -fsSL --max-time 30 "$URL" || true)
+        if echo "$HTML" | grep -qi "Sagrada"; then
+          echo "app=up" >> "$GITHUB_OUTPUT"
+        else
+          echo "::error::Could not reach SagradaGo at $URL"
           exit 1
         fi
-        HTML=$(curl -fsSL --max-time 30 "$WEB_URL" || true)
-        if echo "$HTML" | grep -qi "Domain registration has expired"; then
-          echo "app=down" >> "$GITHUB_OUTPUT"
-          {
-            echo "## Playwright tests skipped"
-            echo "WEB_URL currently loads a domain parking page (nuls-moa.com registration has expired)."
-            echo "Renew the domain or update the WEB_URL GitHub secret to the live app, then re-run this workflow."
-          } >> "$GITHUB_STEP_SUMMARY"
-          echo "::warning::WEB_URL is a parking page (domain expired). Skipping Playwright tests."
-        else
-          echo "app=up" >> "$GITHUB_OUTPUT"
-        fi
     - name: Install Playwright Browsers
-      if: steps.health.outputs.app == 'up'
       run: npx playwright install --with-deps
     - name: Run Playwright tests
-      if: steps.health.outputs.app == 'up'
       env:
-        WEB_URL: ${{ secrets.WEB_URL }}
+        SAGRADA_WEB_URL: https://www.sagradago.com
+        SAGRADA_EMAIL_ADDRESS: ${{ secrets.SAGRADA_EMAIL_ADDRESS }}
+        SAGRADA_PASSWORD: ${{ secrets.SAGRADA_PASSWORD }}
         EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
         PASSWORD: ${{ secrets.PASSWORD }}
-        USER_EMAIL_ADDRESS: ${{ secrets.USER_EMAIL_ADDRESS }}
-        USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
-        EMPLOYEE_ID: ${{ secrets.EMPLOYEE_ID }}
-        NAME: ${{ secrets.NAME }}
-        JOB_TITLE: ${{ secrets.JOB_TITLE }}
-        DEPARTMENT: ${{ secrets.DEPARTMENT }}
       run: npx playwright test
     - uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() && steps.health.outputs.app == 'up' }}
+      if: ${{ !cancelled() }}
       with:
         name: playwright-report
         path: playwright-report/
