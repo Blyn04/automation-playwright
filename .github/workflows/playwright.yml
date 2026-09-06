@@ -37,6 +37,12 @@ jobs:
         SAGRADA_PASSWORD: ${{ secrets.SAGRADA_PASSWORD }}
         EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
         PASSWORD: ${{ secrets.PASSWORD }}
+        FIRST_NAME: ${{ secrets.FIRST_NAME }}
+        MIDDLE_NAME: ${{ secrets.MIDDLE_NAME }}
+        LAST_NAME: ${{ secrets.LAST_NAME }}
+        CONTACT_NUMBER: ${{ secrets.CONTACT_NUMBER }}
+        BIRTHDAY: ${{ secrets.BIRTHDAY }}
+        SIGNUP_PASSWORD: ${{ secrets.SIGNUP_PASSWORD }}
       run: npx playwright test
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}

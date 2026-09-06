@@ -1,0 +1,15 @@
+export const SignUpPageLocators = {
+  SIGN_IN_HEADER_BUTTON: ".signin-container button.border-btn",
+  TITLE: ".modal-card .modal-title",
+  GO_TO_SIGN_UP_BUTTON: '.modal-card button.modal-link:has-text("No account yet")',
+  FIRST_NAME_INPUT: ".modal-grid > div:nth-child(1) input",
+  MIDDLE_NAME_INPUT: ".modal-grid > div:nth-child(2) input",
+  LAST_NAME_INPUT: ".modal-grid > div:nth-child(3) input",
+  CONTACT_NUMBER_INPUT: ".modal-grid > div:nth-child(4) > div:first-child input",
+  BIRTHDAY_INPUT: '.modal-grid input[type="date"]',
+  EMAIL_INPUT: '.modal-grid input[type="email"]',
+  PASSWORD_INPUT: ".modal-grid > div:nth-child(6) .modal-password-wrapper input",
+  RETYPE_PASSWORD_INPUT: ".modal-grid > div:nth-child(7) .modal-password-wrapper input",
+  SIGN_UP_BUTTON: ".modal-card button.filled-btn",
+  NOTICE_DIALOG: ".ant-modal",
+};
