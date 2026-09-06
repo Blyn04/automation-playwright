@@ -77,7 +77,6 @@ test.describe('Negative Sign Up Tests', () => {
     await expect(signUpPage.submitButton).toBeEnabled();
     await signUpPage.clickSignUpButton();
     
-    // Assert custom JS error message for invalid format
     await expect(page.getByText('Invalid employee ID format. Use ##-#### (e.g., 12-3456).')).toBeVisible();
     await expect(signUpPage.submitButton).toBeVisible();
   });
@@ -92,8 +91,7 @@ test.describe('Negative Sign Up Tests', () => {
 
     await expect(signUpPage.submitButton).toBeEnabled();
     await signUpPage.clickSignUpButton();
-    
-    // Assert custom JS error message for restricted email domain
+
     await expect(page.getByText('Only @nu-moa.edu.ph and @students.nu-moa.edu.ph email addresses are allowed.')).toBeVisible();
     await expect(signUpPage.submitButton).toBeVisible();
   });
